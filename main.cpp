@@ -1,15 +1,16 @@
-#include "parser.h"
+
+#include "document.h"
 
 int main(int argc, char* argv[]){
 
 	/*
 	*Create path to file for parsing
 	*/
-	char path[] = "samples/";
-	strcat(path,argv[1]); 
-	
+	std::string path("samples/");
+	path+=std::string (argv[1]); 	
 
 	std::ifstream file(path);
+
     if (file)
     {
         std::cout<<"path file: "<<path<<std::endl;
@@ -28,16 +29,13 @@ int main(int argc, char* argv[]){
         file.read(&buffer[0],length); 
 
 
+        /*
+        *fetch, parse and then print out as human readable format
+        */
+        document doc(buffer);
+        parse(doc);
+        doc.dump(std::cout);
 
-		 /*Constructor BSON*/
-	    BSON parser(buffer);
-	    
-	    /* Parse the file */
-	    parser.Parse();
-
-	    /*Print the content in format readable*/
-	    parser.Dump();
-    
 	}
 
 
