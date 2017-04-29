@@ -12,9 +12,9 @@ std::vector<char> convert_to_hex(std::vector<char> str) {
     static char hex_table[] = {'0', '1', '2', '3', '4', '5', '6', '7',
                                '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
     std::vector<char> res;
-    for (std::vector<char>::iterator i=str.begin(); i!=str.end(); ++i) { 
-        res.push_back(hex_table[((unsigned char)(*i) / 16)]);
-        res.push_back(hex_table[((unsigned char)(*i) % 16)]);
+    for (unsigned char it: str) { 
+        res.push_back(hex_table[it / 16]);
+        res.push_back(hex_table[it % 16]);
     }
     return res;
 }
@@ -131,6 +131,7 @@ void parse(document& doc){
 
 		//go to the begin of keyname encoded
 		pos++; 
+		element* elm;
 
 		//read keyname and add into vector of ordered keys
 		keyname = read_cstring(parsed_doc,pos);
@@ -139,29 +140,31 @@ void parse(document& doc){
 		switch(parsed_doc[indicator]){
 			//double
 			case '\x01': {							
-							element elm(read_double(parsed_doc,pos)); 
+							//element elm(read_double(parsed_doc,pos),DOUBLE); 
+							elm = new double_element(read_double(parsed_doc,pos));
 							doc.add_list(keyname,elm);
 							break; 
 						}
 
-			//JScode
+			/*//JScode
 			case '\x0D': {	
-							element elm(read_string(parsed_doc,pos), JSCODE); 
+							//element elm(read_string(parsed_doc,pos), JSCODE); 
 							doc.add_list(keyname,elm);
 							break; 
-						}
+						}*/
 
 			//string UTF-8
 			case '\x02': {	
-							element elm(read_string(parsed_doc,pos), STRING); 
+							//element elm(read_string(parsed_doc,pos), STRING); 
+							elm = new string_element(read_string(parsed_doc,pos));
 							doc.add_list(keyname,elm);
 							break; 
 						}
 			
 			//array
-			case '\x04': 
+			//case '\x04': 
 
-			//document embedded
+			/*//document embedded
 			case '\x03': {	
 							document embedded_doc(read_embedded_doc(parsed_doc,pos));
 							parse(embedded_doc);
@@ -175,16 +178,17 @@ void parse(document& doc){
 							element elm(UNDEFINED); 
 							doc.add_list(keyname,elm);
 							break; 
-						}
+						}*/
 
 			//ObjectID
 			case '\x07': {	
-							element elm(read_objectId(parsed_doc,pos), OBJECT_ID); 
+							//element elm(read_objectId(parsed_doc,pos), OBJECT_ID); 
+							elm = new string_element(read_objectId(parsed_doc,pos));
 							doc.add_list(keyname,elm);
 							break; 
 						}
 
-			//Boolean
+			/*//Boolean
 			case '\x08': {	
 							element elm(read_bool(parsed_doc,pos)); 
 							doc.add_list(keyname,elm);
@@ -203,30 +207,33 @@ void parse(document& doc){
 							element elm(_NULL_); 
 							doc.add_list(keyname,elm);
 							break; 
-						}
+						}*/
 
 			//int32
 			case '\x10':{	
-							element elm(read_int32(parsed_doc,pos), _INT32_); 
+							//element elm(read_int32(parsed_doc,pos), _INT32_); 
+							elm = new int32_element(read_int32(parsed_doc,pos));
 							doc.add_list(keyname,elm);
 							break; 
 						}				
 
-			//timestamp
+			/*//timestamp
 			case '\x11':{	
-							element elm(read_uint64(parsed_doc,pos)); 
+							//element elm(read_uint64(parsed_doc,pos)); 
+							elm = new timestamp_element(read_uint64(parsed_doc,pos));
 							doc.add_list(keyname,elm);
 							break; 
-						}	
+						}*/	
 
 			//int64
 			case '\x12':{	
-							element elm(read_int64(parsed_doc,pos), _INT64_); 
+							//element elm(read_int64(parsed_doc,pos), _INT64_); 
+							elm = new int64_element(read_int64(parsed_doc,pos));
 							doc.add_list(keyname,elm);
 							break; 
 						}
 
-			case '\xFF':{	
+			/*case '\xFF':{	
 							element elm(MIN_KEY); 
 							doc.add_list(keyname,elm);
 							break; 

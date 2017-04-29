@@ -9,6 +9,11 @@
    will be turn into a string of hexadecimal (string unknown), including:
    DBpointer, symbol, regex, decimal128, code_w_s, binary data*/
 
+/* variable type and type enumeration dataType 
+ * are used for distinguishing different attributes represented by the same data type*/
+
+/////////////////////* ACCESSORS STILL DONT WORK!!!! *///////////////////////////////////////
+
 
 #include <iostream>
 #include <vector>
@@ -16,6 +21,7 @@
 
 
 class document;
+
 
 //#include "document.h"
 
@@ -44,7 +50,7 @@ enum dataType {
     CODE_W_S
 };
 
-
+/*
 class element {
 private:
     dataType type;
@@ -56,7 +62,7 @@ private:
     * std::string reg_exp;
     * std::string db_pointer;
     * std::string code_w_s;
-    */
+    
     std::string str;
     std::string unknown;
 
@@ -162,9 +168,183 @@ public:
 
 
 };
+*/
 
 
 //overloading operator<< to facilitate the print-out of method dump()
-std::ostream& operator<<(std::ostream& f, const element& e);
+//std::ostream& operator<<(std::ostream& f, const element* elm);
+
+//Convert for dump
+std::vector<char> convert_to_hex(std::vector<char> v);
+
+
+
+class element {
+
+protected: 
+
+    //std::string keyname;
+    dataType type;
+
+
+public:
+
+    element(const dataType& t=UNDEFINED): type(t){} 
+
+    //accessors
+    dataType getType() const { return type; }
+    //std::string getKeyname(){ return keyname; }
+    virtual void setType() = 0;
+
+    
+
+    virtual void print_out(std::ostream& f) const = 0;
+
+};
+
+
+//---------------------------Subclasses------------------------------
+
+
+
+class double_element: public element{
+
+protected:
+
+    double value;
+
+public:
+
+    friend element;
+    double_element(const double& val): element(DOUBLE), value(val){}   
+    double getValue() const { return value; }
+    void setValue(const double& val) { value = val; }
+
+    //void setKeyname(const std::string& k) { keyname = k; }
+
+    void print_out(std::ostream& f)const{ f << value; }
+
+    void setType() { type = DOUBLE; }
+};
+
+
+class int32_element: public element{
+
+protected:
+
+    int value;
+
+public:
+
+    friend element;
+    int32_element(const int& val): element(_INT32_), value(val){}   
+    int getValue() const { return value; }
+    void setValue(const int& val) { value = val; }
+
+    //void setKeyname(const std::string& k) { keyname = k; }
+
+    void print_out(std::ostream& f)const{ f << value; }
+
+    void setType() { type = _INT32_; }
+
+};
+
+
+class int64_element: public element{
+
+protected:
+
+    long value;
+
+public:
+
+    friend element;
+    int64_element(const long& val): element(_INT64_), value(val){}   
+    long getValue() const { return value; }
+    void setValue(const long& val) { value = val; }
+
+    //void setKeyname(const std::string& k) { keyname = k; }
+
+    void print_out(std::ostream& f)const{ f << value; }
+
+    void setType() { type = _INT64_; }
+
+};
+
+
+class string_element: public element{
+
+protected:
+
+    std::string value;
+
+public:
+
+    friend element;
+    string_element(const std::string& val): element(STRING), value(val){}   
+    std::string getValue() const { return value; }
+    void setValue(const std::string& val) { value = val; }
+
+    //void setKeyname(const std::string& k) { keyname = k; }
+
+    void print_out(std::ostream& f)const{ f<<"\""<<value<<"\""; }   
+
+    void setType() { type = STRING; }
+
+};
+
+
+class objectID_element: public element{
+
+protected:
+
+    std::string value;
+
+public:
+
+    friend element;
+    objectID_element(const std::string& val): element(OBJECT_ID), value(val){}   
+    std::string getValue() const { return value; }
+    void setValue(const std::string& val) { value = val; }
+
+    //void setKeyname(const std::string& k) { keyname = k; }
+
+    void print_out(std::ostream& f)const{ f<<"\""<<value<<"\""; }   
+
+    void setType() { type = OBJECT_ID; }
+
+};
+
+
+class embedded_document: public element{
+
+};
+
+
+
+class array: public element{
+
+};
+
+
+class boolean_element: public element{
+
+};
+
+class timestamp_element: public element{
+
+};
+
+class undefined_element: public element{
+
+};
+
+class null_element: public element{
+
+};
+
+
+
+
 
 #endif 
