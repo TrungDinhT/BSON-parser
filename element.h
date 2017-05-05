@@ -50,153 +50,86 @@ enum dataType {
     CODE_W_S
 };
 
-/*
-class element {
-private:
-    dataType type;
 
-    /*
-    unknown field to transform to hexadecimal
-    * std::string binary;
-    * std::string dec128;
-    * std::string reg_exp;
-    * std::string db_pointer;
-    * std::string code_w_s;
-    
-    std::string str;
-    std::string unknown;
-
-    int int32;
-    long int64;
-    double db;
-    unsigned long timestamp;
-
-    document *doc;
-
-    bool boolean;
-
-public:
-
-    element(const int i32, const dataType t) : int32(i32), type(t){}
-
-    element(const long i64, const dataType t) : int64(i64), type(t){}
-
-    element(const double d) : db(d), type(DOUBLE){}
-
-    element(const unsigned long tst) : timestamp(tst), type(TIMESTAMP){}
-
-    element(bool b) : boolean(b), type(_BOOL_){}
-
-    element(const dataType& t): type(t){} //_NULL_ or UNDEFINED or MIN_KEY or MAX_KEY
-
-    element(const std::string &s, const dataType t): type(t) {
-        switch(t){
-            case STRING: case OBJECT_ID: case JSCODE: {str=s; break;}
-            default: unknown = s;
-        }
-    }
-   
-    element(document* emb) : doc(emb), type(DOCUMENT){}
-        
-    std::string to_unknown_string();
-
-    const dataType &get_type() const {
-        return type;
-    }
-
-
-
-    int get_int32() const { return int32; }
-
-    long get_int64() const { return int64; }
-
-    double get_double() const { return db; }
-
-    bool get_bool() const { return boolean; }
-
-    const std::string& get_string() const { return str; }
-
-    unsigned long get_timestamp() const { return timestamp; }
-
-    document* get_embedded_doc() const {
-        return doc;
-    }
-
- 
-
-    void set_int32(const int i32) { 
-        type = _INT32_;
-        int32 = i32; 
-    }
-
-    void set_int64(const long i64, const dataType& t) { 
-        type = t;
-        int64 = i64; 
-    }
-
-    void setDouble(const double d) { 
-        type = DOUBLE;
-        db = d; 
-    }
-
-    void set_string(const std::string &s, const dataType& t) { 
-        switch(t){
-            case STRING: case OBJECT_ID: case JSCODE: {str=s; break;}
-            default: unknown = s;
-        }
-    }
-
-    void set_bool(bool b) {
-        type = _BOOL_;
-        boolean = b;
-    }
-
-    void set_timestamp(const unsigned long tst) {
-        type = TIMESTAMP;
-        timestamp = tst;
-    }
-
-    void set_UTC_time(const long utc) {
-        type = UTC_TIME;
-        int64 = utc;
-    }
-
-    void set_document(document *d) {
-        type = DOCUMENT;
-        doc = d;
-    }
-
-
-};
-*/
-
-
-//overloading operator<< to facilitate the print-out of method dump()
-//std::ostream& operator<<(std::ostream& f, const element* elm);
 
 //Convert for dump
 std::vector<char> convert_to_hex(std::vector<char> v);
 
 
+struct element{
 
-class element {
-
-protected: 
-
-    //std::string keyname;
-    dataType type;
-
+private: 
+    dataType type; //inaccessible to modified for any derived class of base
 
 public:
-
     element(const dataType& t=UNDEFINED): type(t){} 
 
     //accessors
     dataType getType() const { return type; }
-    //std::string getKeyname(){ return keyname; }
-    virtual void setType() = 0;
 
-    
+};
+
+
+template<typename T> struct type_element: public element{
+
+    T value;
+
+    type_element(const T val, const dataType& t): value(val), element(t){}
+
+};
+
+struct double_element: public type_element<double>{
+    double_element(const double val, const dataType& t): type_element(val,t){}
+};
+
+struct string_element: public type_element<std::string>{
+    string_element(const std::string val, const dataType& t): type_element(val,t){}
+};
+
+
+//overloading operator<< to facilitate the print-out of method dump()
+std::ostream& operator<<(std::ostream& f, element* elm);
+
+
+
+/*
+//-------------------------classes of accessors------------------------
+
+class double_tools{
+
+public:
+    virtual double getValue() const = 0;
+    virtual void setValue(const double val) = 0;
+};
+
+
+class string_tools{
+
+public:
+    virtual std::string getValue() const = 0;
+    virtual void setValue(const std::string val) = 0;
+};
+
+//class int32_tools;
+//class int64_tools;
+//class uint64_tools;
+//class bool_tools;
+
+class element: public virtual double_tools, public virtual string_tools
+//, public int32_tools, 
+//public int64_tools, public uint64_tools, public bool_tools
+
+{
+
+protected: 
+    dataType type;
+
+public:
+    element(const dataType& t=UNDEFINED): type(t){} 
+
+    //accessors
+    dataType getType() const { return type; }
+
 
     virtual void print_out(std::ostream& f) const = 0;
 
@@ -207,28 +140,27 @@ public:
 
 
 
-class double_element: public element{
+class double_element: public element, public virtual double_tools{
 
-protected:
-
+private:
     double value;
 
 public:
 
-    friend element;
-    double_element(const double& val): element(DOUBLE), value(val){}   
-    double getValue() const { return value; }
-    void setValue(const double& val) { value = val; }
+    double_element(const double val): element(DOUBLE), value(val){}   
 
-    //void setKeyname(const std::string& k) { keyname = k; }
+    double double_tools::getValue() const {return value;}
+    void setValue(const double val) { value = val; }
 
     void print_out(std::ostream& f)const{ f << value; }
 
-    void setType() { type = DOUBLE; }
+
+    /*std::string string_tools::getValue() const;
+    void setValue(const std::string val);
 };
 
 
-class int32_element: public element{
+/*class int32_element: public element{
 
 protected:
 
@@ -238,10 +170,12 @@ public:
 
     friend element;
     int32_element(const int& val): element(_INT32_), value(val){}   
-    int getValue() const { return value; }
+    //int getValue() const { return value; }
     void setValue(const int& val) { value = val; }
 
     //void setKeyname(const std::string& k) { keyname = k; }
+
+    //static_cast<const double&> void getValue() const {return value;}
 
     void print_out(std::ostream& f)const{ f << value; }
 
@@ -260,7 +194,7 @@ public:
 
     friend element;
     int64_element(const long& val): element(_INT64_), value(val){}   
-    long getValue() const { return value; }
+    //long getValue() const { return value; }
     void setValue(const long& val) { value = val; }
 
     //void setKeyname(const std::string& k) { keyname = k; }
@@ -274,22 +208,21 @@ public:
 
 class string_element: public element{
 
-protected:
-
+private:
     std::string value;
 
 public:
 
-    friend element;
-    string_element(const std::string& val): element(STRING), value(val){}   
+    string_element(const std::string val): element(STRING), value(val){}   
+    
     std::string getValue() const { return value; }
-    void setValue(const std::string& val) { value = val; }
-
-    //void setKeyname(const std::string& k) { keyname = k; }
+    void setValue(const std::string val) { value = val; }
 
     void print_out(std::ostream& f)const{ f<<"\""<<value<<"\""; }   
 
-    void setType() { type = STRING; }
+
+    double getValue() const {}
+    void setValue(const double val) {}
 
 };
 
@@ -297,23 +230,23 @@ public:
 class objectID_element: public element{
 
 protected:
-
     std::string value;
 
 public:
 
-    friend element;
-    objectID_element(const std::string& val): element(OBJECT_ID), value(val){}   
+    objectID_element(const std::string val): element(OBJECT_ID), value(val){}   
+    
     std::string getValue() const { return value; }
-    void setValue(const std::string& val) { value = val; }
-
-    //void setKeyname(const std::string& k) { keyname = k; }
+    void setValue(const std::string val) { value = val; }
 
     void print_out(std::ostream& f)const{ f<<"\""<<value<<"\""; }   
 
-    void setType() { type = OBJECT_ID; }
+
+    double getValue() const {}
+    void setValue(const double val) {}
 
 };
+
 
 
 class embedded_document: public element{
@@ -342,6 +275,8 @@ class undefined_element: public element{
 class null_element: public element{
 
 };
+
+*/
 
 
 

@@ -1,4 +1,4 @@
-#include "document.h"
+#include "element.h"
 #include <iostream>
 #include <unordered_map>
 
@@ -9,13 +9,17 @@
 
 
 //overloaded operator<<
-/*
-std::ostream& operator<<(std::ostream& f, const element* elm){
-	switch(elm.getType()){
+
+std::ostream& operator<<(std::ostream& f, element* elm){
+	switch(elm->getType()){
 			//double
+			case DOUBLE: { f<<static_cast<double_element*>(elm)->value; break; }
+			case STRING: { f<<"\""<<static_cast<string_element*>(elm)->value<<"\""; break; }
+			case OBJECT_ID: { f<<"\""<<static_cast<string_element*>(elm)->value<<"\""; break; }
+/*
 			case _INT32_: 
 			case _INT64_: 
-			case DOUBLE: { f<<elm->getValue(); break; }
+			case DOUBLE: { f<<static_cast<double_element>elm->value; break; }
 			//case ARRAY:
 			//case DOCUMENT: { f<<elm->getValue()->dump(f); break; }
 			case _BOOL_: { if(elm->getValue()) f<<"true"; else f<<"false"; break; }
@@ -23,8 +27,7 @@ std::ostream& operator<<(std::ostream& f, const element* elm){
 			case MIN_KEY: { f<<"(min key)"; break;}
 			case MAX_KEY: { f<<"(max key)"; break;}
 			case _NULL_: { f<<"NULL"; break; }
-			case STRING:
-			case OBJECT_ID: { f<<"\""<<elm->getValue()<<"\""; break; }
+
 			//case JSCODE: { f<<"\""<<elm->getValue()<<"\""; break; }
 			
 //---------non-implemented type -> to string unknown (format: hexadecimal)---------//
@@ -41,13 +44,13 @@ std::ostream& operator<<(std::ostream& f, const element* elm){
 
      		/*case ARRAY: 
 			case UTC_TIME:
-			case TIMESTAMP:
+			case TIMESTAMP:*/
 		}
 
 	return f;
 
 }
-*/
+
 
 
 

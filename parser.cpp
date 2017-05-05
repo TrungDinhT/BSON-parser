@@ -74,6 +74,7 @@ bool read_bool(std::vector<char> v, unsigned int& pos){
 
 
 std::string read_cstring(std::vector<char> v, unsigned int& pos){
+
 	std::string cstring;
 	for(;v[pos]!='\x00';pos++){
 		cstring += v[pos];
@@ -87,6 +88,7 @@ std::string read_cstring(std::vector<char> v, unsigned int& pos){
 
 
 std::string read_objectId(std::vector<char> v, unsigned int& pos){
+
 	std::vector<char> objId = convert_to_hex(iterate_and_get(v,pos,12));
 
 	return std::string(objId.data(), objId.size());
@@ -104,28 +106,30 @@ std::string read_string(std::vector<char> v, unsigned int& pos){
 
 std::vector<char> read_embedded_doc(std::vector<char> v, unsigned int& pos){
 
+	//read length of embedded document
 	unsigned int doc_len = read_int32(v,pos);
-	std::vector<char> res(doc_len); //read length of doc
 
-	for(unsigned int i=0; i<doc_len; i++)
-		res[i] = v[pos+i-4];
-	pos += (doc_len - 4);
+	//reset the position at the beginning of embedded document
+	pos-=4; 
+
+	//read embedded document part into a new vector char 
+	std::vector<char> res(iterate_and_get(v,pos,doc_len)); 
 
 	return res;
 }
 
-void parse(document& doc){
 
-	unsigned int pos = 0;
 
-	std::vector<char> parsed_doc = doc.get_parsed_doc();
+
+void parse(document& doc, const std::vector<char>& to_parse){
+
+	unsigned int pos = 4; // after first 4 bytes of document's length
+
 	std::string keyname; 
-	int length = read_int32(parsed_doc,pos);
-	doc.set_length (length);
 
 	unsigned int indicator;
 
-	while (pos<length-1){
+	while (pos<doc.len()-1){
 
 		indicator = pos;
 
@@ -134,30 +138,29 @@ void parse(document& doc){
 		element* elm;
 
 		//read keyname and add into vector of ordered keys
-		keyname = read_cstring(parsed_doc,pos);
-		doc.add_ordered_key(keyname); 
+		keyname = read_cstring(to_parse,pos);
 
-		switch(parsed_doc[indicator]){
+		switch(to_parse[indicator]){
 			//double
 			case '\x01': {							
-							//element elm(read_double(parsed_doc,pos),DOUBLE); 
-							elm = new double_element(read_double(parsed_doc,pos));
-							doc.add_list(keyname,elm);
+							//element elm(read_double(to_parse,pos),DOUBLE); 
+							elm = new double_element(read_double(to_parse,pos),DOUBLE);
+							//doc.add_list(keyname,elm);
 							break; 
 						}
 
 			/*//JScode
 			case '\x0D': {	
-							//element elm(read_string(parsed_doc,pos), JSCODE); 
+							//element elm(read_string(to_parse,pos), JSCODE); 
 							doc.add_list(keyname,elm);
 							break; 
 						}*/
 
 			//string UTF-8
 			case '\x02': {	
-							//element elm(read_string(parsed_doc,pos), STRING); 
-							elm = new string_element(read_string(parsed_doc,pos));
-							doc.add_list(keyname,elm);
+							//element elm(read_string(to_parse,pos), STRING); 
+							elm = new string_element(read_string(to_parse,pos), STRING);
+							//doc.add_list(keyname,elm);
 							break; 
 						}
 			
@@ -166,7 +169,7 @@ void parse(document& doc){
 
 			/*//document embedded
 			case '\x03': {	
-							document embedded_doc(read_embedded_doc(parsed_doc,pos));
+							document embedded_doc(read_embedded_doc(to_parse,pos));
 							parse(embedded_doc);
 							element elm(&embedded_doc); 
 							doc.add_list(keyname,elm);
@@ -182,22 +185,22 @@ void parse(document& doc){
 
 			//ObjectID
 			case '\x07': {	
-							//element elm(read_objectId(parsed_doc,pos), OBJECT_ID); 
-							elm = new string_element(read_objectId(parsed_doc,pos));
-							doc.add_list(keyname,elm);
+							//element elm(read_objectId(to_parse,pos), OBJECT_ID); 
+							elm = new string_element(read_objectId(to_parse,pos), OBJECT_ID);
+							//doc.add_list(keyname,elm);
 							break; 
 						}
 
 			/*//Boolean
 			case '\x08': {	
-							element elm(read_bool(parsed_doc,pos)); 
+							element elm(read_bool(to_parse,pos)); 
 							doc.add_list(keyname,elm);
 							break; 
 						}
 
 			//UTC datetime
 			case '\x09': {	
-							element elm(read_int64(parsed_doc,pos), UTC_TIME); 
+							element elm(read_int64(to_parse,pos), UTC_TIME); 
 							doc.add_list(keyname,elm);
 							break; 
 						}
@@ -209,26 +212,26 @@ void parse(document& doc){
 							break; 
 						}*/
 
-			//int32
+			/*//int32
 			case '\x10':{	
-							//element elm(read_int32(parsed_doc,pos), _INT32_); 
-							elm = new int32_element(read_int32(parsed_doc,pos));
+							//element elm(read_int32(to_parse,pos), _INT32_); 
+							elm = new int32_element(read_int32(to_parse,pos));
 							doc.add_list(keyname,elm);
 							break; 
 						}				
 
-			/*//timestamp
+			//timestamp
 			case '\x11':{	
-							//element elm(read_uint64(parsed_doc,pos)); 
-							elm = new timestamp_element(read_uint64(parsed_doc,pos));
+							//element elm(read_uint64(to_parse,pos)); 
+							elm = new timestamp_element(read_uint64(to_parse,pos));
 							doc.add_list(keyname,elm);
 							break; 
-						}*/	
+						}
 
 			//int64
 			case '\x12':{	
-							//element elm(read_int64(parsed_doc,pos), _INT64_); 
-							elm = new int64_element(read_int64(parsed_doc,pos));
+							//element elm(read_int64(to_parse,pos), _INT64_); 
+							elm = new int64_element(read_int64(to_parse,pos));
 							doc.add_list(keyname,elm);
 							break; 
 						}
@@ -264,6 +267,8 @@ void parse(document& doc){
 			case '\x13':		
 */
 		}
+
+		doc.add_list(keyname,elm);
 	
 	}
 

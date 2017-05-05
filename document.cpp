@@ -5,26 +5,14 @@
 /*I haven't implemented the function to turn UTC_TIME and timestamp to readable format
  *I don't distinguish either JScode, string and objectID*/
 
-
-//copy constructor 
-
-document::document(const document& doc): length(doc.get_length()){
-	
-	for(auto it : doc.get_parsed_doc()){
-		parsed_doc.push_back(it);
+document::document(const std::vector<char> buffer): parsed_doc(buffer){
+		std::vector<char> res;
+		res.push_back(buffer[0]);
+		res.push_back(buffer[1]);
+		res.push_back(buffer[2]);
+		res.push_back(buffer[3]);
+		length = *reinterpret_cast<int*>(res.data());
 	}
-
-	for(auto it : doc.get_ordered_key()){
-		ordered_key.push_back(it);
-	}
-
-	for(auto it : doc.get_list_element()){
-		e_list.insert(it);
-	}
-
-}
-
-
 
 std::ostream& document::dump(std::ostream& f) const {
 
@@ -33,8 +21,8 @@ std::ostream& document::dump(std::ostream& f) const {
 
 	for(auto it: ordered_key){
 		f<<"    \""<< it <<"\": ";
-		//f<<e_list.at(it)->getValue();
-		e_list.at(it)->print_out(f);
+		f<<e_list.at(it);
+		//e_list.at(it)->print_out(f);
 		f<<","<<std::endl;
 	}
 
