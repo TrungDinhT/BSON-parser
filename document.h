@@ -4,7 +4,7 @@
    
    iterating over vector of keyname can only be conducted by iterator of document class
 
-   look up for element with keyname is possible by overloading operator[]
+   look up for element with keyname is possible by overloading operator[] (if key not found, add new element)
 
 */
 
@@ -19,12 +19,31 @@
 #include <vector>
 #include <unordered_map>
 #include <fstream>
+#include <cstring>
 #include <string>
 #include <iomanip>
 #include <sstream>
+#include <cfloat>
+#include <typeinfo>
 
 
 #include "element.h"
+
+struct Object{
+
+    std::string str;
+
+	Object(const std::string val): str(val){}
+    template<typename T>
+    operator T() const   //implicitly convert into T
+    {
+       std::stringstream ss(str);
+       T convertedValue;
+       if ( ss >> convertedValue ) return convertedValue;
+       else throw std::runtime_error("conversion failed");
+    }
+
+};
 
 class document{
 
@@ -35,11 +54,15 @@ private:
 	std::vector<std::string> ordered_key;
 	int length;
 
-	document(const document& doc);
-
 public: 
 
-	document(const std::vector<char> buffer);
+	document(const std::vector<char>& buffer);
+
+	//copy constructor
+	//document(const document& doc);
+
+	//cleaning memory by deleting all elements (allocated dynamically during parsing)
+	~document();
 	
 	int len() const { return length; }
 	
@@ -50,11 +73,14 @@ public:
 		//keep track of insertion order
 		ordered_key.push_back(key);
 		e_list.insert(std::pair<std::string, element*> (key,elm));
-	}
-	
-	const element& operator[](const std::string keyname) const; 
+	} 
 
 
+	//used for looking up element with keyname like with JSON
+	Object operator[](std::string keyname);
+
+
+	//Iterating over keynames
 	class key_iterator{
 
 	private:
@@ -73,12 +99,14 @@ public:
 
 	};
 
-
 	key_iterator first_key() { key_iterator(ordered_key.begin()); }
 
 	key_iterator last_key() { key_iterator(ordered_key.end()); }
 };
 
+
 void parse(document& doc, const std::vector<char>& to_parse);
+
+
 
 #endif 

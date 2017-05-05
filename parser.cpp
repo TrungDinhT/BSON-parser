@@ -1,7 +1,9 @@
 
 #include "document.h"
 
-/*I haven't implemented yet the unknown data the function to read the unknown data*/
+/* Unknown data types (that will be dumped into hexa) haven't been treated
+*  Array data type hasn't been treated
+*/
 
 
 
@@ -28,7 +30,7 @@ std::vector<char> iterate_and_get(std::vector<char> v, unsigned int& pos, unsign
 	
 	std::vector<char> res;
 	
-	for (unsigned int i; i<data_size; ++i) { 
+	for (unsigned int i=0; i<data_size; ++i) { 
         res.push_back(v[pos + i]);
     }
 
@@ -101,10 +103,12 @@ std::string read_string(std::vector<char> v, unsigned int& pos){
 	unsigned int strlen = read_int32(v,pos);
 
 	return std::string(iterate_and_get(v,pos,strlen).data(),strlen);
+
+	//return read_cstring(v,pos);
 }
 
 
-std::vector<char> read_embedded_doc(std::vector<char> v, unsigned int& pos){
+std::vector<char> read_embedded_doc(std::vector<char> v, unsigned int pos){
 
 	//read length of embedded document
 	unsigned int doc_len = read_int32(v,pos);
@@ -119,132 +123,116 @@ std::vector<char> read_embedded_doc(std::vector<char> v, unsigned int& pos){
 }
 
 
-
+static unsigned int pos = 0;
 
 void parse(document& doc, const std::vector<char>& to_parse){
 
-	unsigned int pos = 4; // after first 4 bytes of document's length
+	pos+=4; // start after first 4 bytes of document's length
 
-	std::string keyname; 
+	static std::string keyname; 
 
-	unsigned int indicator;
+	static unsigned int indicator;
 
-	while (pos<doc.len()-1){
+	while (to_parse[pos]!='\x00'){
 
 		indicator = pos;
 
 		//go to the begin of keyname encoded
 		pos++; 
-		element* elm;
+		static element* elm;
+		document* emb_doc;
 
 		//read keyname and add into vector of ordered keys
 		keyname = read_cstring(to_parse,pos);
 
 		switch(to_parse[indicator]){
+
 			//double
-			case '\x01': {							
-							//element elm(read_double(to_parse,pos),DOUBLE); 
+			case '\x01':{							
 							elm = new double_element(read_double(to_parse,pos),DOUBLE);
-							//doc.add_list(keyname,elm);
 							break; 
 						}
 
-			/*//JScode
-			case '\x0D': {	
-							//element elm(read_string(to_parse,pos), JSCODE); 
-							doc.add_list(keyname,elm);
-							break; 
-						}*/
-
 			//string UTF-8
-			case '\x02': {	
-							//element elm(read_string(to_parse,pos), STRING); 
+			case '\x02':{	 
 							elm = new string_element(read_string(to_parse,pos), STRING);
-							//doc.add_list(keyname,elm);
 							break; 
 						}
 			
 			//array
 			//case '\x04': 
 
-			/*//document embedded
-			case '\x03': {	
-							document embedded_doc(read_embedded_doc(to_parse,pos));
-							parse(embedded_doc);
-							element elm(&embedded_doc); 
-							doc.add_list(keyname,elm);
+			//document embedded
+			case '\x03':{	
+							std::vector<char> emb(read_embedded_doc(to_parse,pos));
+							emb_doc = new document(emb);
+							elm = new embedded_document(emb_doc,DOCUMENT);							
 							break; 
 						}
 
 			//undefine value
 			case '\x06':{	
-							element elm(UNDEFINED); 
-							doc.add_list(keyname,elm);
-							break; 
-						}*/
-
-			//ObjectID
-			case '\x07': {	
-							//element elm(read_objectId(to_parse,pos), OBJECT_ID); 
-							elm = new string_element(read_objectId(to_parse,pos), OBJECT_ID);
-							//doc.add_list(keyname,elm);
+							elm = new element(UNDEFINED);
 							break; 
 						}
 
-			/*//Boolean
-			case '\x08': {	
-							element elm(read_bool(to_parse,pos)); 
-							doc.add_list(keyname,elm);
+			//ObjectID
+			case '\x07':{	
+							elm = new string_element(read_objectId(to_parse,pos), OBJECT_ID);
+							break; 
+						}
+
+			//Boolean
+			case '\x08':{	
+							elm = new bool_element(read_bool(to_parse,pos), _BOOL_);
 							break; 
 						}
 
 			//UTC datetime
-			case '\x09': {	
-							element elm(read_int64(to_parse,pos), UTC_TIME); 
-							doc.add_list(keyname,elm);
+			case '\x09':{	
+							elm = new int64_element(read_int64(to_parse,pos), UTC_TIME);
 							break; 
 						}
 
 			//null value
-			case '\x0A': {	
-							element elm(_NULL_); 
-							doc.add_list(keyname,elm);
+			case '\x0A':{	
+							elm = new element(_NULL_);
 							break; 
-						}*/
+						}
 
-			/*//int32
+			//JScode
+			case '\x0D':{	
+							elm = new string_element(read_string(to_parse,pos), JSCODE);
+							break;
+						}
+
+			//int32
 			case '\x10':{	
-							//element elm(read_int32(to_parse,pos), _INT32_); 
-							elm = new int32_element(read_int32(to_parse,pos));
-							doc.add_list(keyname,elm);
+							elm = new int32_element(read_int32(to_parse,pos), _INT32_);
 							break; 
 						}				
 
 			//timestamp
 			case '\x11':{	
-							//element elm(read_uint64(to_parse,pos)); 
-							elm = new timestamp_element(read_uint64(to_parse,pos));
-							doc.add_list(keyname,elm);
+							elm = new timestamp(read_uint64(to_parse,pos), TIMESTAMP);
 							break; 
 						}
 
 			//int64
 			case '\x12':{	
-							//element elm(read_int64(to_parse,pos), _INT64_); 
-							elm = new int64_element(read_int64(to_parse,pos));
-							doc.add_list(keyname,elm);
+							elm = new int64_element(read_int64(to_parse,pos), _INT64_);
 							break; 
 						}
 
-			/*case '\xFF':{	
-							element elm(MIN_KEY); 
-							doc.add_list(keyname,elm);
+			//min key
+			case '\xFF':{	
+							elm = new element(MIN_KEY);
 							break; 
 						}
 
+			//max key
 			case '\x7F':{	
-							element elm(MAX_KEY); 
-							doc.add_list(keyname,elm);
+							elm = new element(MAX_KEY);
 							break; 
 						}
 
@@ -269,6 +257,8 @@ void parse(document& doc, const std::vector<char>& to_parse){
 		}
 
 		doc.add_list(keyname,elm);
+
+		if (to_parse[indicator]=='\x03') {parse(*emb_doc, to_parse);}
 	
 	}
 
