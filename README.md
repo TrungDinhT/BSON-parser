@@ -19,3 +19,8 @@ Base class _Document_ provides methods for accessing parsed values, including:
 +   _operator[]_ (overloaded) for searching value by keyname.
 
 +   *key_iterator* for iterating through all parsed values following the order of insertion 
+
+Test files are in folder "samples". Test by running file main (after compiling) with filename
+
+>> ./main test.bson
+  
