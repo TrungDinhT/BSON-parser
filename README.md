@@ -22,5 +22,5 @@ Base class _Document_ provides methods for accessing parsed values, including:
 
 Test files are in folder "samples". Test by running file main (after compiling) with filename
 
->> ./main test.bson
+-> ./main test.bson
   
