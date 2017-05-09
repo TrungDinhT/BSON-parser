@@ -29,6 +29,7 @@
 
 #include "element.h"
 
+/*wrapper for the return value when we search for an element with a keyname from document*/
 struct Object{
 
     std::string str;
@@ -44,6 +45,7 @@ struct Object{
     }
 
 };
+
 
 class document{
 

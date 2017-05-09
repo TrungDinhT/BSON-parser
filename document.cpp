@@ -61,6 +61,7 @@ std::ostream& document::dump(std::ostream& f) const {
 		f<<"\""<< it <<"\": ";
 		elm = e_list.at(it);
 		switch(elm->getType()){
+
 			//double
 			case DOUBLE: { f<<static_cast<double_element*>(elm)->value; break; }
 			
@@ -82,6 +83,13 @@ std::ostream& document::dump(std::ostream& f) const {
 			
 			//boolean
 			case _BOOL_: { if(static_cast<bool_element*>(elm)->value) f<<true; else f<<false; break; }
+
+/*			//timestamp
+			case TIMESTAMP: { f<<"\""<<static_cast<timestamp*>(elm)->to_readable_time()<<"\""; break;}
+*/
+
+			//UTC_TIME
+			case UTC_TIME: { f<<"\""<<static_cast<int64_element*>(elm)->to_readable_time()<<"\""; break;}
 			
 			//types with no value
 			case UNDEFINED: { f<<"(UNDEFINED)"<<elm; break;}
@@ -93,19 +101,17 @@ std::ostream& document::dump(std::ostream& f) const {
 			
 //---------non-implemented type -> to string unknown (format: hexadecimal)---------//
 			
-			case REGEX:
+/*			case REGEX:
 			case SYMBOL:
 			case DB_POINTER:
 			case DEC128: 
      		case BINARY:
      		case CODE_W_S: 
+*/
      		default: { f<<static_cast<unknown_element*>(elm)->value; }
 
 //---------------------------non-implemented yet-----------------------------------//
 
-     		/*case ARRAY: 
-			case UTC_TIME:
-			case TIMESTAMP:*/
 		}
 		if(c < ordered_key.size()) { f<<","; }
 		std::cout<<std::endl;

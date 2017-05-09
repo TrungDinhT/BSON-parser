@@ -34,18 +34,20 @@ enum dataType {
     STRING,
     OBJECT_ID,  
     JSCODE,
+    UNDEFINED,
+    MIN_KEY, 
+    MAX_KEY,
 
 //---------non-implemented type -> to string unknown (format: hexadecimal)---------//
-
-    UNDEFINED,
+/*    
     REGEX, 
     SYMBOL,
     DB_POINTER, 
     DEC128, 
-    MIN_KEY, 
-    MAX_KEY,
     BINARY, 
     CODE_W_S
+*/
+    UNKNOWN
 };
 
 
@@ -60,7 +62,7 @@ private:
     dataType type; //inaccessible to modified for any derived class of base
 
 public:
-    element(const dataType& t=UNDEFINED): type(t){} 
+    element(const dataType& t=UNKNOWN): type(t){} 
 
     //accessors
     dataType getType() const { return type; }
@@ -76,34 +78,52 @@ template<typename T> struct type_element: public element{
 
 
 
-
 struct double_element: public type_element<double>{
     double_element(const double val, const dataType& t): type_element(val,t){}
 };
+
 
 struct string_element: public type_element<std::string>{
     string_element(const std::string val, const dataType& t): type_element(val,t){}
 };
 
+
 struct bool_element: public type_element<bool>{
     bool_element(const bool val, const dataType& t): type_element(val,t){}
 };
+
 
 struct embedded_document: public type_element<document*>{
     embedded_document(document* doc, const dataType& t): type_element(doc,t){}
 };
 
-/*struct array: public type_element<std::vector<document>>{
-    array()
-};*/
+
+struct array: public type_element<std::vector<element*>>{
+    array(std::vector<element*> v, const dataType& t): type_element(v,t){}
+};
+
 
 struct int32_element: public type_element<int>{
     int32_element(const int val, const dataType& t): type_element(val,t){}
 };
 
+
 struct int64_element: public type_element<long>{
     int64_element(const long val, const dataType& t): type_element(val,t){}
+
+    std::string to_readable_time(){
+        if (getType()==UTC_TIME){
+            time_t rawtime = static_cast<time_t>(value/1000);
+            struct tm * dt;
+            char buffer [30];
+            dt = localtime(&rawtime);
+            strftime(buffer, sizeof(buffer), "%H:%M:%S %d/%m/%Y", dt);
+            return std::string(buffer);
+        }
+        return "";
+    }
 };
+
 
 struct timestamp: public type_element<unsigned long>{
     timestamp(const unsigned long val, const dataType& t): type_element(val,t){}
@@ -112,13 +132,6 @@ struct timestamp: public type_element<unsigned long>{
 struct unknown_element: public type_element<std::string>{
     unknown_element(const std::string val, const dataType& t): type_element(val,t){}
 };
-
-
-#include "document.h"
-
-//overloading operator<< to facilitate the print-out of method dump()
-//std::ostream& operator<<(std::ostream& f, element* elm);
-
 
 
 

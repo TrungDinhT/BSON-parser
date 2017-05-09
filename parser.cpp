@@ -122,6 +122,11 @@ std::vector<char> read_embedded_doc(std::vector<char> v, unsigned int pos){
 	return res;
 }
 
+/*std::string read_unknown(std::vector<char> v, unsigned int& pos){
+
+
+}*/
+
 
 static unsigned int pos = 0;
 
@@ -252,7 +257,10 @@ void parse(document& doc, const std::vector<char>& to_parse){
 			case '\x0F':	
 						
 			//decimal128
-			case '\x13':		
+			case '\x13':{
+							elm = new string_element(read_string(to_parse,pos), UNKNOWN);
+							break; 
+						}		
 */
 		}
 
