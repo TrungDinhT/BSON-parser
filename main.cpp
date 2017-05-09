@@ -1,6 +1,7 @@
 
 #include "document.h"
 
+
 int main(int argc, char* argv[]){
 
 	/*
@@ -33,7 +34,7 @@ int main(int argc, char* argv[]){
         *fetch, parse and then print out as human readable format
         */
         document doc(buffer);
-        parse(doc);
+        parse(doc,buffer);
         doc.dump(std::cout);
 
 	}
