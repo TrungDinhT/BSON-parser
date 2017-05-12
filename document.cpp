@@ -51,12 +51,11 @@ std::ostream& document::dump(std::ostream& f) const {
 	for(unsigned int i=0;i<call_for_dump-1;i++) f<<"    ";
 	f<<"{"<<std::endl;
 
-	unsigned int c=0;
+	unsigned int c = ordered_key.size();
 
 	element* elm;
 
 	for(auto it: ordered_key){
-		c++;
 		for(unsigned int i=0;i<call_for_dump;i++) f<<"    ";
 		f<<"\""<< it <<"\": ";
 		elm = e_list.at(it);
@@ -113,7 +112,8 @@ std::ostream& document::dump(std::ostream& f) const {
 //---------------------------non-implemented yet-----------------------------------//
 
 		}
-		if(c < ordered_key.size()) { f<<","; }
+		c--;
+		if(c) { f<<","; }
 		std::cout<<std::endl;
 	}
 
