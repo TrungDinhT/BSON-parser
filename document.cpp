@@ -57,7 +57,9 @@ std::ostream& document::dump(std::ostream& f) const {
 
 	for(auto it: ordered_key){
 		for(unsigned int i=0;i<call_for_dump;i++) f<<"    ";
+		
 		f<<"\""<< it <<"\": ";
+		
 		elm = e_list.at(it);
 		switch(elm->getType()){
 
@@ -112,13 +114,18 @@ std::ostream& document::dump(std::ostream& f) const {
 //---------------------------non-implemented yet-----------------------------------//
 
 		}
+		
 		c--;
 		if(c) { f<<","; }
+		
 		std::cout<<std::endl;
 	}
 
 	for(unsigned int i=0;i<call_for_dump-1;i++) f<<"    ";
+	
 	f<<"}";
+	
 	call_for_dump--;
+	
 	return f;
 }
